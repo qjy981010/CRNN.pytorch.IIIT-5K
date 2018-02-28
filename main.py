@@ -3,7 +3,6 @@
 
 import torch
 import os
-import pickle
 import torch.optim as optim
 from torch.autograd import Variable
 from warpctc_pytorch import CTCLoss
@@ -15,40 +14,41 @@ from utils import *
 def train(root, start_epoch, epoch_num, letters,
           net=None, lr=0.1, fix_width=True):
     """
-    训练CRNN
+    Train CRNN model
 
     Args:
-        root (str): 存放数据集的文件夹
-        start_epoch (int): 开始训练的是第多少次epoch，便于对训练过程的追踪回顾。
-        epoch_num (int): 将训练的epoch数目
-        letters (str): 所有的字符组成的字符串
-        net (CRNN, optional): 之前训练过的网络
-        lr (float, optional): 学习速率，默认为0.1
-        fix_width (bool, optional): 是否固定宽度，默认固定
+        root (str): Root directory of dataset
+        start_epoch (int): Epoch number to start
+        epoch_num (int): Epoch number to train
+        letters (str): Letters contained in the data
+        net (CRNN, optional): CRNN model (default: None)
+        lr (float, optional): Coefficient that scale delta before it is applied
+            to the parameters (default: 1.0)
+        fix_width (bool, optional): Scale images to fixed size (default: True)
 
     Returns:
-        CRNN: 训练好的模型
+        CRNN: Trained CRNN model
     """
 
-    # 加载数据
+    # load data
     trainloader = load_data(root, training=True, fix_width=fix_width)
-    # 判断GPU是否可用
+    # use gpu or not
     use_cuda = torch.cuda.is_available()
     if not net:
-        # 如果没有之前训练好的模型，就新建一个
+        # create a new model if net is None
         net = CRNN(1, len(letters) + 1)
-    # 损失函数
+    # loss function
     criterion = CTCLoss()
-    # 优化方法采用Adadelta
+    # Adadelta
     optimizer = optim.Adadelta(net.parameters(), lr=lr)
     if use_cuda:
         net = net.cuda()
         criterion = criterion.cuda()
-    # 构建编码解码器
+    # get encoder and decoder
     labeltransformer = LabelTransformer(letters)
 
     print('====   Training..   ====')
-    # .train() 对批归一化有一定的作用
+    # .train() has any effect on Dropout and BatchNorm.
     net.train()
     for epoch in range(start_epoch, start_epoch + epoch_num):
         print('----    epoch: %d    ----' % (epoch, ))
@@ -59,17 +59,15 @@ def train(root, start_epoch, epoch_num, letters,
                 img = img.cuda()
             img, label = Variable(img), Variable(label)
             label_length = Variable(label_length)
-            # 清空梯度
             optimizer.zero_grad()
-            # 将图片输入
+            # put images in
             outputs = net(img)
             output_length = Variable(torch.IntTensor(
                 [outputs.size(0)]*outputs.size(1)))
-            # 计算损失
+            # calc loss
             loss = criterion(outputs, label, output_length, label_length)
-            # 反向传播
+            # update
             loss.backward()
-            # 更新参数
             optimizer.step()
             loss_sum += loss.data[0]
         print('loss = %f' % (loss_sum, ))
@@ -79,26 +77,26 @@ def train(root, start_epoch, epoch_num, letters,
 
 def test(root, net, letters, fix_width=True):
     """
-    测试CRNN模型
+    Test CRNN model
 
     Args:
-        root (str): 存放数据集的文件夹
-        letters (str): 所有的字符组成的字符串
-        net (CRNN, optional): 训练好的网络
-        fix_width (bool, optional): 是否固定宽度，默认固定
+        root (str): Root directory of dataset
+        letters (str): Letters contained in the data
+        net (CRNN, optional): trained CRNN model
+        fix_width (bool, optional): Scale images to fixed size (default: True)
     """
 
-    # 加载数据
+    # load data
     testloader = load_data(root, training=False, fix_width=fix_width)
-    # 判断GPU是否可用
+    # use gpu or not
     use_cuda = torch.cuda.is_available()
     if use_cuda:
         net = net.cuda()
-    # 构建编码解码器
+    # get encoder and decoder
     labeltransformer = LabelTransformer(letters)
 
     print('====    Testing..   ====')
-    # .eval() 对批归一化有一定的作用
+    # .eval() has any effect on Dropout and BatchNorm.
     net.eval()
     correct = 0
     for i, (img, origin_label) in enumerate(testloader):
@@ -111,41 +109,42 @@ def test(root, net, letters, fix_width=True):
         outputs = labeltransformer.decode(outputs.data)
         correct += sum([out == real for out,
                         real in zip(outputs, origin_label)])
-    # 计算准确率
+    # calc accuracy
     print('test accuracy: ', correct / 30, '%')
 
 
 def main(training=True, fix_width=True):
     """
-    主函数，控制train与test的调用以及模型的加载存储等
+    Main
 
     Args:
-        training (bool, optional): 为True是训练，为False是测试，默认为True
-        fix_width (bool, optional): 是否固定图片宽度，默认为True
+        training (bool, optional): If True, train the model, otherwise test it (default: True)
+        fix_width (bool, optional): Scale images to fixed size (default: True)
     """
 
-    file_name = ('fix_width_' if fix_width else '') + 'crnn.pkl'
+    model_path = ('fix_width_' if fix_width else '') + 'crnn.pth'
     letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     root = 'data/IIIT5K/'
     if training:
-        net = None
+        net = CRNN(1, len(letters) + 1)
         start_epoch = 0
-        epoch_num = 2  # 每训练两个epoch进行一次测试
+        epoch_num = 100
         lr = 0.1
-        if os.path.exists(file_name):
+        # if there is pre-trained model, load it
+        if os.path.exists(model_path):
             print('Pre-trained model detected.\nLoading model...')
-            start_epoch, net = pickle.load(open(file_name, 'rb'))
+            net.load_state_dict(torch.load(model_path))
         if torch.cuda.is_available():
             print('GPU detected.')
-        for i in range(5):
-            net = train(root, start_epoch, epoch_num, letters,
-                        net=net, lr=lr, fix_width=fix_width)
-            start_epoch += epoch_num
-            test(root, net, letters, fix_width=fix_width)
-        # 将训练的epoch数与我们的模型保存起来，模型还可以加载出来继续训练
-        pickle.dump((start_epoch, net), open(file_name, 'wb'), True)
+        net = train(root, start_epoch, epoch_num, letters,
+                    net=net, lr=lr, fix_width=fix_width)
+        test(root, net, letters, fix_width=fix_width)
+        # save the trained model for training again
+        torch.save(net.state_dict(), model_path)
     else:
-        start_epoch, net = pickle.load(open(file_name, 'rb'))
+        net = CRNN(1, len(letters) + 1)
+        if os.path.exists(model_path):
+            net.load_state_dict(torch.load(model_path))
         test(root, net, letters, fix_width=fix_width)
 
 

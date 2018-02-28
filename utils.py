@@ -12,14 +12,14 @@ from crnn import CRNN
 
 class FixHeightResize(object):
     """
-    对图片做固定高度的缩放
+    Scale images to fixed height
     """
 
     def __init__(self, height=32, minwidth=100):
         self.height = height
         self.minwidth = minwidth
 
-    # img 为 PIL.Image 对象
+    # img is instance of PIL.Image
     def __call__(self, img):
         w, h = img.size
         width = max(int(w * self.height / h), self.minwidth)
@@ -28,12 +28,12 @@ class FixHeightResize(object):
 
 class IIIT5k(Dataset):
     """
-    用于加载IIIT-5K数据集，继承于torch.utils.data.Dataset
+    IIIT-5K dataset，(torch.utils.data.Dataset)
 
     Args:
-        root (string): 数据集所在的目录
-        training (bool, optional): 为True时加载训练集，为False时加载测试集，默认为True
-        fix_width (bool, optional): 为True时将图片缩放到固定宽度，为False时宽度不固定，默认为True
+        root (string): Root directory of dataset
+        training (bool, optional): If True, train the model, otherwise test it (default: True)
+        fix_width (bool, optional): Scale images to fixed size (default: True)
     """
 
     def __init__(self, root, training=True, fix_width=True):
@@ -42,16 +42,15 @@ class IIIT5k(Dataset):
         data = sio.loadmat(os.path.join(root, data_str+'.mat'))[data_str][0]
         self.img, self.label = zip(*[(x[0][0], x[1][0]) for x in data])
 
-        # 图片缩放 + 转化为灰度图 + 转化为张量
+        # image resize + grayscale + transform to tensor
         transform = [transforms.Resize((32, 100), Image.ANTIALIAS)
                      if fix_width else FixHeightResize(32)]
         transform.extend([transforms.Grayscale(), transforms.ToTensor()])
         transform = transforms.Compose(transform)
 
-        # 加载图片
+        # load images
         self.img = [transform(Image.open(root+'/'+img)) for img in self.img]
 
-    # 以下两个方法必须要重载
     def __len__(self, ):
         return len(self.img)
 
@@ -61,15 +60,15 @@ class IIIT5k(Dataset):
 
 def load_data(root, training=True, fix_width=True):
     """
-    用于加载IIIT-5K数据集，继承于torch.utils.data.Dataset
+    load IIIT-5K dataset
 
     Args:
-        root (string): 数据集所在的目录
-        training (bool, optional): 为True时加载训练集，为False时加载测试集，默认为True
-        fix_width (bool, optional): 为True时将图片缩放到固定宽度，为False时宽度不固定，默认为True
+        root (string): Root directory of dataset
+        training (bool, optional): If True, train the model, otherwise test it (default: True)
+        fix_width (bool, optional): Scale images to fixed size (default: True)
 
     Return:
-        加载的训练集或者测试集
+        Training set or test set
     """
 
     if training:
@@ -81,7 +80,7 @@ def load_data(root, training=True, fix_width=True):
         else:
             print('==== Loading data.. ====')
             dataset = IIIT5k(root, training=True, fix_width=fix_width)
-            pickle.dump(dataset, open(filename, 'wb'), True)
+            pickle.dump(dataset, open(filename, 'wb'))
         dataloader = DataLoader(dataset, batch_size=batch_size,
                                 shuffle=True, num_workers=4)
     else:
@@ -93,17 +92,17 @@ def load_data(root, training=True, fix_width=True):
         else:
             print('==== Loading data.. ====')
             dataset = IIIT5k(root, training=False, fix_width=fix_width)
-            pickle.dump(dataset, open(filename, 'wb'), True)
+            pickle.dump(dataset, open(filename, 'wb'))
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     return dataloader
 
 
 class LabelTransformer(object):
     """
-    字符编码解码器
+    encoder and decoder
 
     Args:
-        letters (str): 所有的字符组成的字符串
+        letters (str): Letters contained in the data
     """
 
     def __init__(self, letters):

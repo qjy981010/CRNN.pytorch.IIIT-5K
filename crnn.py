@@ -3,32 +3,32 @@ import torch.nn as nn
 
 class CRNN(nn.Module):
     """
-    CRNN模型
+    CRNN model
 
     Args:
-        in_channels (int): 输入的通道数，如果是灰度图则为1，如果没有灰度化则为3
-        out_channels (int): 输出的通道数（类别数），即样本里共有多少种字符
+        in_channels (int): input channel number，1 for grayscaled images，3 for rgb images
+        out_channels (int): output channel number(class number), letters number in dataset
     """
 
     def __init__(self, in_channels, out_channels):
         super(CRNN, self).__init__()
         self.in_channels = in_channels
         hidden_size = 256
-        # CNN 结构与参数
+        # CNN struct and parameters
         self.cnn_struct = ((64, ), (128, ), (256, 256), (512, 512), (512, ))
         self.cnn_paras = ((3, 1, 1), (3, 1, 1),
                           (3, 1, 1), (3, 1, 1), (2, 1, 0))
-        # 池化层结构
+        # pooling layer struct
         self.pool_struct = ((2, 2), (2, 2), (2, 1), (2, 1), None)
-        # 是否加入批归一化层
+        # add batchnorm layer or not
         self.batchnorm = (False, False, False, True, False)
         self.cnn = self._get_cnn_layers()
-        # RNN 两层双向LSTM。pytorch中LSTM的输出通道数为hidden_size *
-        # num_directions,这里因为是双向的，所以num_directions为2
+        # output channel number of LSTM in pytorch is hidden_size *
+        #     num_directions, num_directions=2 for bidirectional LSTM
         self.rnn1 = nn.LSTM(self.cnn_struct[-1][-1],
                             hidden_size, bidirectional=True)
         self.rnn2 = nn.LSTM(hidden_size*2, hidden_size, bidirectional=True)
-        # 最后一层全连接
+        # fully-connected
         self.fc = nn.Linear(hidden_size*2, out_channels)
 
     def forward(self, x):   # input: height=32, width>=100
@@ -43,7 +43,6 @@ class CRNN(nn.Module):
         x = x.view(l, b, -1)   # length>=24, batch, output_size
         return x
 
-    # 构建CNN层
     def _get_cnn_layers(self):
         cnn_layers = []
         in_channels = self.in_channels
