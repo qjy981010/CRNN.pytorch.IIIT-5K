@@ -3,6 +3,8 @@ For Chinese: 详细做法请参考[我的博客](https://qjy981010.github.io/201
 ## RCNN
 A pytorch implementation of CRNN，and test it with IIIT-5K.
 
+Paper is [here](https://arxiv.org/abs/1507.05717).
+
 Netword Struct：
 
 | Type | Configurations | Output Size |
