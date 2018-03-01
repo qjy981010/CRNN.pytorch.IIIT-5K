@@ -1,7 +1,9 @@
-## RCNN
-用pytorch实现CRNN，并在IIIT-5K上进行测试。
+For Chinese: 详细做法请参考[我的博客](https://qjy981010.github.io/2017/12/24/PyTorch-%E7%94%A8CRNN%E6%94%BB%E9%99%B7IIIT-5k/)
 
-网络配置：
+## RCNN
+A pytorch implementation of CRNN，and test it with IIIT-5K.
+
+Netword Struct：
 
 | Type | Configurations | Output Size |
 | :---: | :---: | :---: |
@@ -24,7 +26,6 @@
 | Bidirectional-LSTM | #hidden units:256 | W/4-1 × label_num |
 | Transcription | - | str |
 
-要运行，请先安装warp-ctc的pytorch版本，见https://github.com/SeanNaren/warp-ctc/tree/pytorch_bindings/pytorch_binding  
-数据集在[这里](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html)下载并解压到当前目录的data文件夹中。
+Please install [warp-ctc for pytorch](https://github.com/SeanNaren/warp-ctc/tree/pytorch_bindings/pytorch_binding) first.
+click [here](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html) and download IIIT-5K dataset to the 'data/' folder of current path.
 
-详细做法请参考[我的博客](https://qjy981010.github.io/2017/12/24/PyTorch-%E7%94%A8CRNN%E6%94%BB%E9%99%B7IIIT-5k/)
