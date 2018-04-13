@@ -2,6 +2,7 @@
 *data/
 *.model/
 *.models/
+lib/
 *.pkl
 *.csv
 *.txt
