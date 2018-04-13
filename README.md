@@ -31,3 +31,19 @@ Netword Struct：
 Please install [warp-ctc for pytorch](https://github.com/SeanNaren/warp-ctc/tree/pytorch_bindings/pytorch_binding) first.
 click [here](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html) and download IIIT-5K dataset to the 'data/' folder of current path.
 
+## warp-ctc install
+
+if you failed to install warp-ctc from code, just extract the lib.zip. And run the commands below.
+
+```bash
+sudo mv lib/move_these_to_usr_lib/* /usr/lib
+sudo mv lib/move_these_to_usr_lib_python3.6_site-packages/* /usr/lib/python3.6/site-pachages/
+```
+
+Then, insert this line to your `~/.bashrc`
+
+```bash
+export  LD_LIBRARY_PATH='/usr/lib/python3.6/site-packages/warpctc_pytorch'
+```
+
+Now, try `from warpctc_pytorch import CTCLoss`
