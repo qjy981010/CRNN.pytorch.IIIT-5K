@@ -33,14 +33,15 @@ click [here](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html)
 
 ## warp-ctc install
 
-if you failed to install warp-ctc from code, just extract the lib.zip. And run the commands below.
+if you failed to install warp-ctc from source code, just extract the lib.zip. And run the commands below.
 
 ```bash
 sudo mv lib/move_these_to_usr_lib/* /usr/lib
 sudo mv lib/move_these_to_usr_lib_python3.6_site-packages/* /usr/lib/python3.6/site-pachages/
+sudo pip install cffi
 ```
 
-Then, insert this line to your `~/.bashrc`
+Then, to make warpctc can be found, insert this line to your `~/.bashrc`.
 
 ```bash
 export  LD_LIBRARY_PATH='/usr/lib/python3.6/site-packages/warpctc_pytorch'
