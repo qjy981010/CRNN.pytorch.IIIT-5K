@@ -3,8 +3,8 @@
 
 import torch
 import os
+import argparse
 import torch.optim as optim
-from torch.autograd import Variable
 from warpctc_pytorch import CTCLoss
 
 from crnn import CRNN
@@ -32,18 +32,22 @@ def train(root, start_epoch, epoch_num, letters,
 
     # load data
     trainloader = load_data(root, training=True, fix_width=fix_width)
-    # use gpu or not
-    use_cuda = torch.cuda.is_available()
     if not net:
         # create a new model if net is None
         net = CRNN(1, len(letters) + 1)
     # loss function
     criterion = CTCLoss()
     # Adadelta
-    optimizer = optim.Adadelta(net.parameters(), lr=lr)
+    optimizer = optim.Adadelta(net.parameters(), lr=lr, weight_decay=1e-3)
+    # use gpu or not
+    use_cuda = torch.cuda.is_available()
+    device = torch.device('cuda' if use_cuda else 'cpu')
     if use_cuda:
-        net = net.cuda()
-        criterion = criterion.cuda()
+        net = net.to(device)
+        criterion = criterion.to(device)
+    else:
+        print("*****   Warning: Cuda isn't available!  *****")
+
     # get encoder and decoder
     labeltransformer = LabelTransformer(letters)
 
@@ -55,21 +59,18 @@ def train(root, start_epoch, epoch_num, letters,
         loss_sum = 0
         for i, (img, label) in enumerate(trainloader):
             label, label_length = labeltransformer.encode(label)
-            if use_cuda:
-                img = img.cuda()
-            img, label = Variable(img), Variable(label)
-            label_length = Variable(label_length)
+            img = img.to(device)
             optimizer.zero_grad()
             # put images in
             outputs = net(img)
-            output_length = Variable(torch.IntTensor(
-                [outputs.size(0)]*outputs.size(1)))
+            output_length = torch.IntTensor(
+                [outputs.size(0)]*outputs.size(1))
             # calc loss
             loss = criterion(outputs, label, output_length, label_length)
             # update
             loss.backward()
             optimizer.step()
-            loss_sum += loss.data[0]
+            loss_sum += loss.item()
         print('loss = %f' % (loss_sum, ))
     print('Finished Training')
     return net
@@ -87,33 +88,42 @@ def test(root, net, letters, fix_width=True):
     """
 
     # load data
+    trainloader = load_data(root, training=True, fix_width=fix_width)
     testloader = load_data(root, training=False, fix_width=fix_width)
     # use gpu or not
     use_cuda = torch.cuda.is_available()
+    device = torch.device('cuda' if use_cuda else 'cpu')
     if use_cuda:
-        net = net.cuda()
+        net = net.to(device)
+    else:
+        print("*****   Warning: Cuda isn't available!  *****")
     # get encoder and decoder
     labeltransformer = LabelTransformer(letters)
 
     print('====    Testing..   ====')
     # .eval() has any effect on Dropout and BatchNorm.
     net.eval()
-    correct = 0
-    for i, (img, origin_label) in enumerate(testloader):
-        if use_cuda:
-            img = img.cuda()
-        img = Variable(img)
+    acc = []
+    for loader in (testloader, trainloader):
+        correct = 0
+        total = 0
+        for i, (img, origin_label) in enumerate(loader):
+            img = img.to(device)
 
-        outputs = net(img)  # length × batch × num_letters
-        outputs = outputs.max(2)[1].transpose(0, 1)  # batch × length
-        outputs = labeltransformer.decode(outputs.data)
-        correct += sum([out == real for out,
-                        real in zip(outputs, origin_label)])
-    # calc accuracy
-    print('test accuracy: ', correct / 30, '%')
+            outputs = net(img)  # length × batch × num_letters
+            outputs = outputs.max(2)[1].transpose(0, 1)  # batch × length
+            outputs = labeltransformer.decode(outputs.data)
+            correct += sum([out == real for out,
+                            real in zip(outputs, origin_label)])
+            total += len(origin_label)
+        # calc accuracy
+        acc.append(correct / total * 100)
+        print(correct, total)
+    print('testing accuracy: ', acc[0], '%')
+    print('training accuracy: ', acc[1], '%')
 
 
-def main(training=True, fix_width=True):
+def main(epoch_num, lr=0.1, training=True, fix_width=True):
     """
     Main
 
@@ -128,8 +138,6 @@ def main(training=True, fix_width=True):
     if training:
         net = CRNN(1, len(letters) + 1)
         start_epoch = 0
-        epoch_num = 100
-        lr = 0.1
         # if there is pre-trained model, load it
         if os.path.exists(model_path):
             print('Pre-trained model detected.\nLoading model...')
@@ -138,9 +146,10 @@ def main(training=True, fix_width=True):
             print('GPU detected.')
         net = train(root, start_epoch, epoch_num, letters,
                     net=net, lr=lr, fix_width=fix_width)
-        test(root, net, letters, fix_width=fix_width)
         # save the trained model for training again
         torch.save(net.state_dict(), model_path)
+        # test
+        test(root, net, letters, fix_width=fix_width)
     else:
         net = CRNN(1, len(letters) + 1)
         if os.path.exists(model_path):
@@ -149,4 +158,11 @@ def main(training=True, fix_width=True):
 
 
 if __name__ == '__main__':
-    main(training=True, fix_width=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--epoch_num', type=int, default=20, help='number of epochs to train for (default=20)')
+    parser.add_argument('--lr', type=float, default=0.1, help='learning rate for optim (default=0.1)')
+    parser.add_argument('--test', action='store_true', help='Whether to test directly (default is training)')
+    parser.add_argument('--fix_width', action='store_true', help='Whether to resize images to the fixed width (default is True)')
+    opt = parser.parse_args()
+    print(opt)
+    main(opt.epoch_num, lr=opt.lr, training=(not opt.test), fix_width=opt.fix_width)
