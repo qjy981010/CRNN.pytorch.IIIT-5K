@@ -19,7 +19,7 @@ class FixHeightResize(object):
         self.height = height
         self.minwidth = minwidth
 
-    # img is instance of PIL.Image
+    # img is an instance of PIL.Image
     def __call__(self, img):
         w, h = img.size
         width = max(int(w * self.height / h), self.minwidth)
