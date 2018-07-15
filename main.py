@@ -118,7 +118,6 @@ def test(root, net, letters, fix_width=True):
             total += len(origin_label)
         # calc accuracy
         acc.append(correct / total * 100)
-        print(correct, total)
     print('testing accuracy: ', acc[0], '%')
     print('training accuracy: ', acc[1], '%')
 
