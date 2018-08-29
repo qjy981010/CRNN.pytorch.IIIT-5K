@@ -32,7 +32,7 @@ Netword Struct：
 Please install [warp-ctc for pytorch](https://github.com/SeanNaren/warp-ctc/tree/pytorch_bindings/pytorch_binding) first.
 click [here](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html) and download IIIT-5K dataset to the 'data/' folder of current path.
 
-## warp-ctc install
+## warp-ctc install(for python3.6)
 
 if you failed to install warp-ctc from source code, just extract the lib.zip. And run the commands below.
 
