@@ -2,7 +2,7 @@ For Chinese: 详细做法请参考[我的博客](https://qjy981010.github.io/201
 
 ## RCNN
 A pytorch implementation of CRNN，and test it with IIIT-5K.  
-(It had been migrated to pytorch-0.4. For users of pytorch-0.3, please move files in folder 'for\_pytorch0.3' here)
+Support PyTorch 1.0 now.
 
 Paper is [here](https://arxiv.org/abs/1507.05717).
 
@@ -26,26 +26,8 @@ Netword Struct：
 | Convolution | #maps:512, k:2 × 2, s:1, p:0 | W/4-1 × 1 × 512 |
 | Map-to-Sequence | - | W/4-1 × 512 |
 | Bidirectional-LSTM | #hidden units:256 | W/4-1 × 256 |
-| Bidirectional-LSTM | #hidden units:256 | W/4-1 × label_num |
+| Bidirectional-LSTM | #hidden units:256 | W/4-1 × label\_num |
 | Transcription | - | str |
 
-Please install [warp-ctc for pytorch](https://github.com/SeanNaren/warp-ctc/tree/pytorch_bindings/pytorch_binding) first.
 click [here](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html) and download IIIT-5K dataset to the 'data/' folder of current path.
 
-## warp-ctc install(for python3.6)
-
-if you failed to install warp-ctc from source code, just extract the lib.zip. And run the commands below.
-
-```bash
-sudo mv lib/move_these_to_usr_lib/* /usr/lib
-sudo mv lib/move_these_to_usr_lib_python3.6_site-packages/* /usr/lib/python3.6/site-pachages/
-sudo pip install cffi
-```
-
-Then, to make warpctc can be found, insert this line to your `~/.bashrc`.
-
-```bash
-export  LD_LIBRARY_PATH='/usr/lib/python3.6/site-packages/warpctc_pytorch'
-```
-
-Now, try `from warpctc_pytorch import CTCLoss`
