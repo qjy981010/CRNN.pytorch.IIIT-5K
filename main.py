@@ -5,7 +5,6 @@ import torch
 import os
 import argparse
 import torch.optim as optim
-from warpctc_pytorch import CTCLoss
 
 from crnn import CRNN
 from utils import *
@@ -35,12 +34,11 @@ def train(root, start_epoch, epoch_num, letters,
     if not net:
         # create a new model if net is None
         net = CRNN(1, len(letters) + 1)
-    # loss function
-    criterion = CTCLoss()
-    # Adadelta
+    criterion = torch.nn.CTCLoss()
     optimizer = optim.Adadelta(net.parameters(), lr=lr, weight_decay=1e-3)
     # use gpu or not
     use_cuda = torch.cuda.is_available()
+    use_cuda = False
     device = torch.device('cuda' if use_cuda else 'cpu')
     if use_cuda:
         net = net.to(device)

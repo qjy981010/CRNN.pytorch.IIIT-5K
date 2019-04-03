@@ -43,7 +43,7 @@ class IIIT5k(Dataset):
         self.img, self.label = zip(*[(x[0][0], x[1][0]) for x in data])
 
         # image resize + grayscale + transform to tensor
-        transform = [transforms.Resize((32, 100), Image.ANTIALIAS)
+        transform = [transforms.Resize((32, 100), Image.BILINEAR)
                      if fix_width else FixHeightResize(32)]
         transform.extend([transforms.Grayscale(), transforms.ToTensor()])
         transform = transforms.Compose(transform)
@@ -93,7 +93,8 @@ def load_data(root, training=True, fix_width=True):
             print('==== Loading data.. ====')
             dataset = IIIT5k(root, training=False, fix_width=fix_width)
             pickle.dump(dataset, open(filename, 'wb'))
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        dataloader = DataLoader(dataset, batch_size=batch_size,
+                                shuffle=False, num_workers=4)
     return dataloader
 
 
