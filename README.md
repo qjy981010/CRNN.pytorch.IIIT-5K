@@ -1,6 +1,6 @@
 For Chinese: 详细做法请参考[我的博客](https://qjy981010.github.io/2017/12/24/PyTorch-%E7%94%A8CRNN%E6%94%BB%E9%99%B7IIIT-5k/)
 
-## RCNN
+## CRNN
 A pytorch implementation of CRNN，and test it with IIIT-5K.  
 Support PyTorch 1.0 now.
 
