@@ -4,7 +4,7 @@ For Chinese: 详细做法请参考[我的博客](https://qjy981010.github.io/201
 A pytorch implementation of CRNN，and test it with IIIT-5K.  
 Support PyTorch 1.0 now.
 
-Paper is [here](https://arxiv.org/abs/1507.05717).
+[Paper](https://arxiv.org/abs/1507.05717).
 
 Netword Struct：
 
@@ -29,5 +29,17 @@ Netword Struct：
 | Bidirectional-LSTM | #hidden units:256 | W/4-1 × label\_num |
 | Transcription | - | str |
 
-click [here](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html) and download IIIT-5K dataset to the 'data/' folder of current path.
+## Requirements
 
+- Python 3
+- PyTorch 1.0
+
+## Usage
+
+Click [here](http://cvit.iiit.ac.in/projects/SceneTextUnderstanding/IIIT5K.html) and download IIIT-5K dataset to the 'data/' folder of current path.
+
+```bash
+python main.py --fix_depth
+```
+
+You can tune the hyperparameters for better performence.

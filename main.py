@@ -38,7 +38,6 @@ def train(root, start_epoch, epoch_num, letters,
     optimizer = optim.Adadelta(net.parameters(), lr=lr, weight_decay=1e-3)
     # use gpu or not
     use_cuda = torch.cuda.is_available()
-    use_cuda = False
     device = torch.device('cuda' if use_cuda else 'cpu')
     if use_cuda:
         net = net.to(device)
@@ -156,10 +155,10 @@ def main(epoch_num, lr=0.1, training=True, fix_width=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch_num', type=int, default=20, help='number of epochs to train for (default=20)')
+    parser.add_argument('--epoch_num', type=int, default=50, help='number of epochs to train for (default=20)')
     parser.add_argument('--lr', type=float, default=0.1, help='learning rate for optim (default=0.1)')
     parser.add_argument('--test', action='store_true', help='Whether to test directly (default is training)')
-    parser.add_argument('--fix_width', action='store_true', help='Whether to resize images to the fixed width (default is True)')
+    parser.add_argument('--fix_width', action='store_true', help='Whether to resize images to the fixed width (default is False)')
     opt = parser.parse_args()
     print(opt)
     main(opt.epoch_num, lr=opt.lr, training=(not opt.test), fix_width=opt.fix_width)
